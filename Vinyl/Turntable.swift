@@ -23,7 +23,7 @@ public final class Turntable: URLSession {
     var errorHandler: ErrorHandler = DefaultErrorHandler()
     fileprivate let turntableConfiguration: TurntableConfiguration
     fileprivate var player: Player?
-    var recorder: Recorder?
+    public var recorder: Recorder?
     fileprivate var recordingSession: URLSession?
     fileprivate let operationQueue: OperationQueue
 
@@ -351,7 +351,7 @@ extension Turntable {
         return plastic
     }
 
-    static func createPlastic(vinyl vinylName: String, bundle: Bundle, recordingMode: RecordingMode) -> Plastic? {
+    public static func createPlastic(vinyl vinylName: String, bundle: Bundle, recordingMode: RecordingMode) -> Plastic? {
         if let plastic: Plastic = loadJSON(from: bundle, fileName: vinylName) {
             return plastic
         }
@@ -364,7 +364,7 @@ extension Turntable {
         }
     }
 
-    static func createPlastic(absolutePath: String) -> Plastic? {
+    public static func createPlastic(absolutePath: String) -> Plastic? {
         if let plastic: Plastic = loadJSON(fromPath: absolutePath) {
             return plastic
         } else {
