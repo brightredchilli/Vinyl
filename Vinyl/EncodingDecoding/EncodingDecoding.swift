@@ -24,7 +24,7 @@ func encode(body: Data?, headers: HTTPHeaders) -> Any? {
         return String(data: body, encoding: .utf8) as Any?
         
     case _ where contentType.hasPrefix("application/json"):
-        return try! JSONSerialization.jsonObject(with: body) as Any?
+        return try! JSONSerialization.jsonObject(with: body, options: .allowFragments) as Any?
         
     default:
         return body.base64EncodedString(options: []) as Any?
@@ -34,16 +34,14 @@ func encode(body: Data?, headers: HTTPHeaders) -> Any? {
 func decode(body: Any?, headers: HTTPHeaders) -> Data? {
     
     guard let body = body else { return nil }
+    let contentType = headers["Content-Type"] ?? ""
     
-    guard let contentType = headers["Content-Type"]  else {
-        
-        // As last resource, we will check if the bodyData is a string and if so convert it
-        if let string = body as? String {
-            return string.data(using: .utf8)
-        }
-        else {
-            return nil
-        }
+    // handle fragments
+    if let string = body as? String {
+        return string.data(using: .utf8)
+    } else if let integer = body as? Int {
+        var int = integer
+        return NSData(bytes: &int, length: MemoryLayout.size(ofValue: integer)) as Data
     }
     
     if let string = body as? String, contentType.hasPrefix("text/") {

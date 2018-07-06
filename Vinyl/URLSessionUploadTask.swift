@@ -12,7 +12,7 @@ public final class URLSessionUploadTask: Foundation.URLSessionUploadTask, URLSes
     
     fileprivate let completion: () -> Void
     
-    init(completion: @escaping () -> Void) {
+    init(uuid: UUID = UUID(), request: URLRequest, completion: @escaping () -> Void) {
         self.completion = completion
     }
     
