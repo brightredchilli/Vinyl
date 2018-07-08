@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "Vinyl-Alamofire"
-  s.version      = "0.1.2"
+  s.version      = "0.1.3"
   s.summary      = "Network testing à la VCR in Swift"
   s.description  = "Vinyl-Alamofire is designed to automate replaying network requests and integrate seamlessly with Alamofire. It takes heavy inspiration from Vinyl"
   s.homepage     = "https://github.com/brightredchilli/Vinyl-Alamofire"
