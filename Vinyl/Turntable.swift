@@ -27,31 +27,29 @@ public final class Turntable: URLSession {
     fileprivate var recordingSession: URLSession?
     fileprivate let operationQueue: OperationQueue
 
-    public init(configuration: TurntableConfiguration, delegateQueue: OperationQueue? = nil, urlSession: URLSession? = nil) {
+    public init(vinyl: Vinyl,
+                turntableConfiguration: TurntableConfiguration = TurntableConfiguration(),
+                delegateQueue: OperationQueue? = nil,
+                urlSession: URLSession? = nil) {
+      self.turntableConfiguration = turntableConfiguration
+      if let delegateQueue = delegateQueue {
+        operationQueue = delegateQueue
+      } else {
+        operationQueue = OperationQueue()
+        operationQueue.maxConcurrentOperationCount = 1
+      }
 
-        turntableConfiguration = configuration
-        if let delegateQueue = delegateQueue {
-            operationQueue = delegateQueue
-        } else {
-            operationQueue = OperationQueue()
-            operationQueue.maxConcurrentOperationCount = 1
-        }
+      recordingSession = urlSession
 
-        recordingSession = urlSession
-        if configuration.recodingEnabled {
-            recorder = Recorder(wax: Wax(tracks: []), recordingPath: configuration.recordingPath)
-            recordingSession = recordingSession ?? URLSession.shared
-        }
+      switch turntableConfiguration.recordingMode {
+      case .missingVinyl, .missingTracks:
+        recorder = Recorder(wax: Wax(vinyl: vinyl), recordingPath: turntableConfiguration.recordingPath)
+      default:
+        recorder = nil
+      }
+      player = Turntable.createPlayer(with: vinyl, configuration: turntableConfiguration)
+      super.init()
 
-        super.init()
-    }
-
-    public convenience init(vinyl: Vinyl,
-                            turntableConfiguration: TurntableConfiguration = TurntableConfiguration(),
-                            delegateQueue: OperationQueue? = nil,
-                            urlSession: URLSession? = nil) {
-        self.init(configuration: turntableConfiguration, delegateQueue: delegateQueue, urlSession: urlSession)
-        player = Turntable.createPlayer(with: vinyl, configuration: turntableConfiguration)
     }
 
     public convenience init(cassetteName: String,
@@ -71,15 +69,6 @@ public final class Turntable: URLSession {
         let plastic = Turntable.createPlastic(vinyl: vinylName, bundle: bundle, recordingMode: turntableConfiguration.recordingMode)
         let vinyl = Vinyl(plastic: plastic ?? [])
         self.init(vinyl: vinyl, turntableConfiguration: turntableConfiguration, delegateQueue: delegateQueue, urlSession: urlSession)
-
-        recordingSession = urlSession
-        switch turntableConfiguration.recordingMode {
-        case .missingVinyl where plastic == nil, .missingTracks:
-            recorder = Recorder(wax: Wax(vinyl: vinyl), recordingPath: recordingPath(fromConfiguration: turntableConfiguration, vinylName: vinylName, bundle: bundle))
-        default:
-            recorder = nil
-
-        }
     }
 
     deinit {
@@ -371,4 +360,29 @@ extension Turntable {
             return nil
         }
     }
+
+  public static func plasticPath(from bundle: Bundle, fileName: String) -> String? {
+    return bundle.path(forResource: fileName, ofType: "json")
+  }
+  
+
+  private static func loadJSON<T>(from bundle: Bundle, fileName: String) -> T? {
+    guard let path = plasticPath(from: bundle, fileName: fileName),
+      let jsonData: T = loadJSON(fromPath: path)
+      else {
+        return nil
+    }
+
+    return jsonData
+  }
+
+  private static func loadJSON<T>(fromPath path: String) -> T?  {
+    guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
+      let jsonData = try? JSONSerialization.jsonObject(with: data) as? T
+      else {
+        return nil
+    }
+
+    return jsonData
+  }
 }
